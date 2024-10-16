@@ -43,7 +43,7 @@ dependencies:
   - boto3=1.24.96
   - accelerate=0.13.2
   - datasets=2.6.1
-  - diffusers=0.11.1
+  - diffusers=0.30.3
   - av=10.0.0
   - cmake=3.24.3
   # trick to avoid cpu affinity issue described in https://github.com/pytorch/pytorch/issues/99625

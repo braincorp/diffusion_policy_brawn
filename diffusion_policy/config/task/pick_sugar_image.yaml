@@ -3,7 +3,6 @@ name: pick_sugar_image
 image_shape: [3, 240, 240]
 dataset_path: ~/brawn_artifacts/datasets/dobot_nova5/episodes_pick_bottled_sugar_lab/episodes_pick_bottled_sugar_lab_first_60_openvla_rlds.zarr.zip
 
-# Needed?
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:

@@ -66,12 +66,12 @@ class BrawnPickSugarImageDataset(BaseImageDataset):
 
     def get_normalizer(self, mode='limits', **kwargs):
         normalizer = LinearNormalizer()
-        normalizer['actions'] = SingleFieldLinearNormalizer.create_fit(
+        normalizer['action'] = SingleFieldLinearNormalizer.create_fit(
             data=self.replay_buffer['actions'],
             mode=mode,
         )
-        normalizer['images'] = get_image_range_normalizer()
-        normalizer['states'] = SingleFieldLinearNormalizer.create_fit(
+        normalizer['image'] = get_image_range_normalizer()
+        normalizer['state'] = SingleFieldLinearNormalizer.create_fit(
             data=self.replay_buffer['states'],
             mode=mode
         )
@@ -109,7 +109,7 @@ def _test_dataset():
     print(f"Number of episodes: {len(dataset)}")
 
     normalizer = dataset.get_normalizer()
-    nactions = normalizer['actions'].normalize(dataset.replay_buffer['actions'])
+    nactions = normalizer['action'].normalize(dataset.replay_buffer['actions'])
     for dim in range(nactions.shape[-1]):
         plt.plot(nactions[:,dim], label=f"dim {dim}")
     plt.legend()

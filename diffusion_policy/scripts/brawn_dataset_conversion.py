@@ -1,5 +1,4 @@
 """Script for converting from the RLDS brawn dataset format into the diffusion policy format."""
-# TODO: Start here! Then implement brawn_carrot_plate_image_dataset.py
 import os
 from typing import TypedDict
 
@@ -7,6 +6,7 @@ import click
 import numpy as np
 from tqdm import tqdm
 
+import scipy.spatial.transform as st
 from diffusion_policy.common.replay_buffer import ReplayBuffer
 
 try:
@@ -20,10 +20,10 @@ except ImportError:
 
 class EpisodeDataDict(TypedDict):
     """Format of the episode data."""
-    actions_absolute: np.ndarray
-    actions_relative: np.ndarray
-    images: np.ndarray
-    instructions: np.ndarray
+    actions: np.ndarray  # Absolute actions N x 7 [translation (x, y, z), rotation (as rotvec), gripper (open/close)]
+    states: np.ndarray  # States N x 7  [translation (x, y, z), rotation (as rotvec), gripper (position)]
+    images: np.ndarray  # Images N x H x W x C
+    instructions: np.ndarray  # Instructions N x 1
 
 
 @click.command()
@@ -50,7 +50,6 @@ def main(
     )
 
     out_replay_buffer = ReplayBuffer.create_empty_numpy()
-    import pdb; pdb.set_trace()
     for episode_index, episode in enumerate(tqdm(dataset_tfds['train'])):
         episode_metadata = tfds.as_numpy(episode['episode_metadata'])
         episode_actuation_type = episode_metadata['action_actuation_type'].decode('utf-8')
@@ -58,29 +57,80 @@ def main(
             print(f"Skipping episode {episode_index} because actuation type is not position.")
             continue
 
-        episode_actions_relative = []
-        episode_actions_absolute = []
+        episode_num_steps = len(episode['steps'])
+        if episode_num_steps == 0:
+            print(f"Skipping episode {episode_index} because it has no steps.")
+            continue
+
+        first_observation = episode['steps'][0]['observation']
+        previous_state_translation = first_observation['eef_translational_positions']
+        previous_state_orientation = st.Rotation.from_euler(
+            seq='rpy',
+            angles=first_observation['eef_rotational_positions']
+        )
+        previous_action_absolute_translation = None
+        previous_action_absolute_orientation = None
+
+        episode_actions = []
+        episode_states = []
         episode_images = []
         episode_instructions = []
         for step in episode['steps']:
             observation = step['observation']
-            action_relative = step['action']['action_vector']
+            current_state_translation = observation['eef_translational_positions']
+            current_state_orientation = st.Rotation.from_euler(
+                seq='rpy',
+                angles=observation['eef_rotational_positions']
+            )
+            current_state_gripper = observation['gripper_position']
+            current_state = np.concatenate(
+                [
+                    current_state_translation,
+                    current_state_orientation.as_rotvec(),
+                    current_state_gripper[None]
+                ]
+            )
+            if previous_action_absolute_translation is not None:
+                if not np.allclose(current_state_translation, previous_action_absolute_translation):
+                    raise ValueError(f"Current state translation does not match expected translation!")
+
+                if not np.allclose(
+                    current_state_orientation.as_matrix(),
+                    previous_action_absolute_orientation.as_matrix()
+                ):
+                    raise ValueError(f"Current state orientation does not match expected orientation!")
+
+            action_vector = step['action']['action_vector']
+            action_relative_translation = action_vector[:3]
+            action_relative_orientation = st.Rotation.from_euler(
+                seq='rpy',
+                angles=action_vector[3:]
+            )
+            action_gripper = action_vector[-1]
+
+            action_absolute_translation = action_relative_translation + previous_state_translation
+            action_absolute_orientation = action_relative_orientation * previous_state_orientation
             action_absolute = np.concatenate(
                 [
-                    observation['eef_translational_positions'],
-                    observation['eef_rotational_positions'],
-                    action_relative[-1, None]
+                    action_absolute_translation,
+                    action_absolute_orientation.as_rotvec(),
+                    action_gripper[None]
                 ]
             )
 
-            episode_actions_relative.append(action_relative)
-            episode_actions_absolute.append(action_absolute)
+            episode_states.append(current_state)
+            episode_actions.append(action_absolute)
             episode_images.append(observation['static_rgb_image'])
             episode_instructions.append(step['language_instruction'].numpy().decode())
 
+            previous_action_absolute_translation = action_absolute_translation
+            previous_action_absolute_orientation = action_absolute_orientation
+            previous_state_translation = current_state_translation
+            previous_state_orientation = current_state_orientation
+
         episode_data = EpisodeDataDict(
-            actions_absolute=np.array(episode_actions_absolute),
-            actions_relative=np.array(episode_actions_relative),
+            actions=np.array(episode_actions),
+            states=np.array(episode_states),
             images=np.array(episode_images),
             instructions=np.array(episode_instructions),
         )

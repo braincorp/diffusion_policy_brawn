@@ -62,12 +62,6 @@ def main(
             print(f"Skipping episode {episode_index} because it has no steps.")
             continue
 
-        first_observation = episode['steps'][0]['observation']
-        previous_state_translation = first_observation['eef_translational_positions']
-        previous_state_orientation = st.Rotation.from_euler(
-            seq='rpy',
-            angles=first_observation['eef_rotational_positions']
-        )
         previous_action_absolute_translation = None
         previous_action_absolute_orientation = None
 
@@ -79,7 +73,7 @@ def main(
             observation = step['observation']
             current_state_translation = observation['eef_translational_positions']
             current_state_orientation = st.Rotation.from_euler(
-                seq='rpy',
+                seq='xyz',
                 angles=observation['eef_rotational_positions']
             )
             current_state_gripper = observation['gripper_position']
@@ -90,26 +84,29 @@ def main(
                     current_state_gripper[None]
                 ]
             )
+
+            # Sanity check that the current state matches the expected state
             if previous_action_absolute_translation is not None:
                 if not np.allclose(current_state_translation, previous_action_absolute_translation):
                     raise ValueError(f"Current state translation does not match expected translation!")
 
                 if not np.allclose(
                     current_state_orientation.as_matrix(),
-                    previous_action_absolute_orientation.as_matrix()
+                    previous_action_absolute_orientation.as_matrix(),
+                    atol=1e-4
                 ):
                     raise ValueError(f"Current state orientation does not match expected orientation!")
 
             action_vector = step['action']['action_vector']
             action_relative_translation = action_vector[:3]
             action_relative_orientation = st.Rotation.from_euler(
-                seq='rpy',
-                angles=action_vector[3:]
+                seq='xyz',
+                angles=action_vector[3:6]
             )
             action_gripper = action_vector[-1]
 
-            action_absolute_translation = action_relative_translation + previous_state_translation
-            action_absolute_orientation = action_relative_orientation * previous_state_orientation
+            action_absolute_translation = action_relative_translation + current_state_translation
+            action_absolute_orientation = action_relative_orientation * current_state_orientation
             action_absolute = np.concatenate(
                 [
                     action_absolute_translation,
@@ -125,8 +122,6 @@ def main(
 
             previous_action_absolute_translation = action_absolute_translation
             previous_action_absolute_orientation = action_absolute_orientation
-            previous_state_translation = current_state_translation
-            previous_state_orientation = current_state_orientation
 
         episode_data = EpisodeDataDict(
             actions=np.array(episode_actions),

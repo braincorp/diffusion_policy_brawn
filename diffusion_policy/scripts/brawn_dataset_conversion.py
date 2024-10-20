@@ -4,9 +4,10 @@ from typing import TypedDict
 
 import click
 import numpy as np
+import scipy.spatial.transform as st
+import zarr
 from tqdm import tqdm
 
-import scipy.spatial.transform as st
 from diffusion_policy.common.replay_buffer import ReplayBuffer
 
 try:
@@ -26,29 +27,7 @@ class EpisodeDataDict(TypedDict):
     instructions: np.ndarray  # Instructions N x 1
 
 
-@click.command()
-@click.option('-i', '--input_rlds_path', required=True, help='path to the RLDS dataset')
-@click.option('-o', '--output_directory', required=True, help='directory in which the converted dataset will be stored')
-def main(
-        input_rlds_path: str,
-        output_directory: str,
-) -> None:
-    """Convert the RLDS dataset into the diffusion policy format."""
-    if not os.path.exists(input_rlds_path):
-        raise FileNotFoundError(f"RLDS dataset path {input_rlds_path} does not exist.")
-
-    if not os.path.exists(output_directory):
-        raise FileNotFoundError(f"Output directory {output_directory} does not exist.")
-
-    # Load the RLDS dataset
-    rlds_dataset_name = os.path.basename(input_rlds_path)
-    rlds_parent_directory = os.path.dirname(input_rlds_path)
-    dataset_tfds = tfds.load(
-        name=rlds_dataset_name,
-        data_dir=rlds_parent_directory,
-        with_info=False,
-    )
-
+def convert_brawn_rlds_to_replay_buffer(dataset_tfds: tfds.core.DatasetInfo) -> ReplayBuffer:
     out_replay_buffer = ReplayBuffer.create_empty_numpy()
     for episode_index, episode in enumerate(tqdm(dataset_tfds['train'])):
         episode_metadata = tfds.as_numpy(episode['episode_metadata'])
@@ -130,9 +109,42 @@ def main(
             instructions=np.array(episode_instructions),
         )
         out_replay_buffer.add_episode(episode_data)
+    return out_replay_buffer
 
+
+@click.command()
+@click.option('-i', '--input_rlds_path', required=True, help='path to the RLDS dataset')
+@click.option('-o', '--output_directory', required=True, help='directory in which the converted dataset will be stored')
+def main(
+        input_rlds_path: str,
+        output_directory: str,
+) -> None:
+    """Convert the RLDS dataset into the diffusion policy format."""
+    if not os.path.exists(input_rlds_path):
+        raise FileNotFoundError(f"RLDS dataset path {input_rlds_path} does not exist.")
+
+    if not os.path.exists(output_directory):
+        raise FileNotFoundError(f"Output directory {output_directory} does not exist.")
+
+    # Load the RLDS dataset
+    rlds_dataset_name = os.path.basename(input_rlds_path)
+    rlds_parent_directory = os.path.dirname(input_rlds_path)
+    dataset_tfds = tfds.load(
+        name=rlds_dataset_name,
+        data_dir=rlds_parent_directory,
+        with_info=False,
+    )
+
+    # Convert into the replay buffer format
+    dataset_replay_buffer = convert_brawn_rlds_to_replay_buffer(dataset_tfds)
+
+    # Save the replay buffer to disk
+    print(f"Saving to {output_directory}")
     output_zarr_path = os.path.join(output_directory, f"{rlds_dataset_name}.zarr.zip")
-    out_replay_buffer.save_to_path(zarr_path=output_zarr_path, chunk_length=-1)
+    with zarr.ZipStore(output_zarr_path) as zip_store:
+        dataset_replay_buffer.save_to_store(store=zip_store)
+
+    print("Conversion complete.")
 
 
 if __name__ == '__main__':

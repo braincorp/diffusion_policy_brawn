@@ -139,8 +139,8 @@ def main(
     dataset_replay_buffer = convert_brawn_rlds_to_replay_buffer(dataset_tfds)
 
     # Save the replay buffer to disk
-    print(f"Saving to {output_directory}")
     output_zarr_path = os.path.join(output_directory, f"{rlds_dataset_name}.zarr.zip")
+    print(f"Saving to {output_zarr_path}")
     with zarr.ZipStore(output_zarr_path) as zip_store:
         dataset_replay_buffer.save_to_store(store=zip_store)
 

@@ -104,7 +104,7 @@ def _test_dataset():
     import os
     from matplotlib import pyplot as plt
 
-    zarr_path = os.path.expanduser('~/brawn_artifacts/datasets/dobot_nova5/episodes_pick_bottled_sugar_lab/episodes_pick_bottled_sugar_lab_first_60_openvla_rlds.zarr.zip')
+    zarr_path = os.path.expanduser('~/brawn_artifacts/datasets/dobot_nova5/episodes_pick_bottled_sugar_lab_above/episodes_pick_bottled_sugar_lab_above_one_episode_per_manilog_openvla_rlds.zarr.zip')
     dataset = BrawnPickSugarImageDataset(zarr_path=zarr_path, horizon=16)
     print(f"Number of episodes: {len(dataset)}")
 

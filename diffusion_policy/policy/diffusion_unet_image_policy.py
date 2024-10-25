@@ -14,26 +14,6 @@ from diffusion_policy.model.diffusion.mask_generator import LowdimMaskGenerator
 from diffusion_policy.model.vision.multi_image_obs_encoder import MultiImageObsEncoder
 from diffusion_policy.common.pytorch_util import dict_apply
 
-@attr.define
-class DiffusionUnitImagePolicyParameters:
-    """Parameters for DiffusionUnetImagePolicy"""
-    shape_meta: dict
-    noise_scheduler: DDPMScheduler
-    obs_encoder: MultiImageObsEncoder
-    horizon: int
-    n_action_steps: int
-    n_obs_steps: int
-    num_inference_steps: int
-    obs_as_global_cond: bool
-    diffusion_step_embed_dim: int
-    down_dims: tuple
-    kernel_size: int
-    n_groups: int
-    cond_predict_scale: bool
-
-    # parameters passed to step
-    kwargs: dict
-
 
 class DiffusionUnetImagePolicy(BaseImagePolicy):
     def __init__(self, 
@@ -53,24 +33,6 @@ class DiffusionUnetImagePolicy(BaseImagePolicy):
             # parameters passed to step
             **kwargs):
         super().__init__()
-
-        params = DiffusionUnitImagePolicyParameters(
-            shape_meta=shape_meta,
-            noise_scheduler=noise_scheduler,
-            obs_encoder=obs_encoder,
-            horizon=horizon,
-            n_action_steps=n_action_steps,
-            n_obs_steps=n_obs_steps,
-            num_inference_steps=num_inference_steps,
-            obs_as_global_cond=obs_as_global_cond,
-            diffusion_step_embed_dim=diffusion_step_embed_dim,
-            down_dims=down_dims,
-            kernel_size=kernel_size,
-            n_groups=n_groups,
-            cond_predict_scale=cond_predict_scale,
-            kwargs=kwargs
-        )
-        import pdb; pdb.set_trace()  # store params and load model directly TODO
 
         # parse shapes
         action_shape = shape_meta['action']['shape']

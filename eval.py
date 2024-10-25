@@ -32,7 +32,6 @@ def main(checkpoint, output_dir, device):
     cfg = payload['cfg']
     cls = hydra.utils.get_class(cfg._target_)
     workspace = cls(cfg, output_dir=output_dir)
-    import pdb; pdb.set_trace()  # go thru logic to load model in workspace.model. once have this, should be good to go!
     workspace: BaseWorkspace
     workspace.load_payload(payload, exclude_keys=None, include_keys=None)
     
@@ -46,6 +45,7 @@ def main(checkpoint, output_dir, device):
     policy.eval()
     
     # run eval
+    import pdb; pdb.set_trace()
     env_runner = hydra.utils.instantiate(
         cfg.task.env_runner,
         output_dir=output_dir)

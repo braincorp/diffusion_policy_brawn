@@ -1,3 +1,4 @@
+# TODO: remove once integrated into Brawn
 import os
 
 import dill
@@ -40,8 +41,6 @@ def main():
     workspace: TrainDiffusionUnetImageWorkspace = load_workspace(checkpoint_path)
     policy: BaseImagePolicy = get_policy_from_workspace(workspace)
 
-    import pdb; pdb.set_trace()
-
     rng = np.random.RandomState(0)
     image = rng.random_sample(size=(policy.n_obs_steps, 3, 240, 240))
     state = rng.random_sample(size=(policy.n_obs_steps, 7))
@@ -55,13 +54,7 @@ def main():
     with torch.no_grad():
         result = policy.predict_action(obs_dict)
     action = result['action'][0].detach().to('cpu').numpy()
-
-
-# TODO: what is the easiest way to integrate this into brawn? torch2onnx? For now I can make a branch where this lives in it... Or I can make
-    #  this into a package...
-    import pdb; pdb.set_trace()
-    pass
-
+    print(action)
 
 
 if __name__ == '__main__':

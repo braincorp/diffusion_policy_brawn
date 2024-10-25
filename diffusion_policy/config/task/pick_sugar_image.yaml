@@ -1,0 +1,29 @@
+name: pick_sugar_image
+
+image_shape: [3, 240, 240]
+dataset_path: ~/brawn_artifacts/datasets/dobot_nova5/episodes_pick_bottled_sugar_lab_above/episodes_pick_bottled_sugar_lab_above_one_episode_per_manilog_openvla_rlds.zarr.zip
+
+shape_meta: &shape_meta
+  # acceptable types: rgb, low_dim
+  obs:
+    image:
+      shape: ${task.image_shape}
+      type: rgb
+    state:
+      shape: [7]
+      type: low_dim
+  action:
+    shape: [7]
+
+env_runner:
+  _target_: diffusion_policy.env_runner.brawn_image_runner.BrawnImageRunner
+
+dataset:
+  _target_: diffusion_policy.dataset.brawn_pick_sugar_image_dataset.BrawnPickSugarImageDataset
+  zarr_path: ${task.dataset_path}
+  horizon: 16
+  pad_before: 0
+  pad_after: 0
+  seed: 42
+  validation_ratio: 0.00
+  max_train_episodes: null

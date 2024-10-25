@@ -63,7 +63,10 @@ def test_pick_sugar_runs(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
     print(action)
 
 
-def test_pick_sugar_on_dataset(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
+def test_pick_sugar_on_dataset(
+        checkpoint_path: str = DEFAULT_CHECKPOINT_PATH,
+        debug: bool = False
+):
     """Test that the pick sugar policy performs as expected on a training batch."""
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"Checkpoint {checkpoint_path} not found.")
@@ -78,11 +81,36 @@ def test_pick_sugar_on_dataset(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
     batch = dict_apply(batch, lambda x: x.to(DEVICE, non_blocking=True))
     with torch.no_grad():
         loss = policy.compute_loss(batch).cpu().numpy()
+        output = policy.predict_action(batch['obs'])
 
     print(f'Loss: {loss}')
+    if debug:
+        import matplotlib.pyplot as plt
+
+        action_gt = batch['action'][0].detach().to('cpu').numpy()
+        action_pred = output['action_pred'][0].detach().to('cpu').numpy()
+
+        # Compare the ground truth and predicted actions
+        plt.figure()
+        plt.title('Components')
+        index_names = ['x', 'y', 'z', 'roll', 'pitch', 'yaw', 'gripper']
+        for index, name in enumerate(index_names):
+            plt.subplot(3, 3, index + 1)
+            plt.plot(action_gt[:, index], label='GT')
+            plt.plot(action_pred[:, index], label='Pred')
+            plt.title(name)
+            plt.legend()
+
+        fig = plt.figure('3D')
+        plt.title('3D Positions')
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(action_gt[:, 0], action_gt[:, 1], action_gt[:, 2], label='GT')
+        ax.plot(action_pred[:, 0], action_pred[:, 1], action_pred[:, 2], label='Pred')
+        plt.show()
+
     assert loss < 0.01
 
 
 if __name__ == '__main__':
     test_pick_sugar_runs()
-    test_pick_sugar_on_dataset()
+    test_pick_sugar_on_dataset(debug=True)

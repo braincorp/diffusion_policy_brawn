@@ -17,7 +17,7 @@ from diffusion_policy.model.common.normalizer import LinearNormalizer, SingleFie
 class BrawnPickSugarImageDataset(BaseImageDataset):
     def __init__(
             self,
-            zarr_path: str, # path to zarr file
+            zarr_path: str,
             horizon: int = 1,
             pad_before: int = 0,
             pad_after: int = 0,
@@ -105,6 +105,9 @@ def _test_dataset():
     from matplotlib import pyplot as plt
 
     zarr_path = os.path.expanduser('~/brawn_artifacts/datasets/dobot_nova5/episodes_pick_bottled_sugar_lab_above/episodes_pick_bottled_sugar_lab_above_one_episode_per_manilog_openvla_rlds.zarr.zip')
+    if not os.path.exists(zarr_path):
+        raise FileNotFoundError(f"Zarr path {zarr_path} does not exist.")
+
     dataset = BrawnPickSugarImageDataset(zarr_path=zarr_path, horizon=16)
     print(f"Number of episodes: {len(dataset)}")
 

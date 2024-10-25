@@ -67,7 +67,7 @@ class SyncVectorEnv(VectorEnv):
             observation = env.reset()
             observations.append(observation)
         self.observations = concatenate(
-            self.single_observation_space, observations, self.observations,
+            observations, self.observations, self.single_observation_space
         )
 
         return deepcopy(self.observations) if self.copy else self.observations
@@ -84,7 +84,7 @@ class SyncVectorEnv(VectorEnv):
             observations.append(observation)
             infos.append(info)
         self.observations = concatenate(
-            self.single_observation_space, observations, self.observations,
+            observations, self.observations, self.single_observation_space
         )
 
         return (

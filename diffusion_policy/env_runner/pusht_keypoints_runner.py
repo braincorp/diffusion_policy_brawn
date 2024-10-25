@@ -133,9 +133,7 @@ class PushTKeypointsRunner(BaseLowdimRunner):
             env_prefixs.append('test/')
             env_init_fn_dills.append(dill.dumps(init_fn))
 
-        # FIXME: shared_memory=True raises the following error on python 3.12:
-        #  ValueError('Using `shared_memory=True` in `AsyncVectorEnv` is incompatible with non-standard Gym observation spaces (i.e. custom spaces inheriting from `gym.Space`), and is only compatible with default Gym spaces (e.g. `Box`, `Tuple`, `Dict`) for batching. Set `shared_memory=False` if you use custom observation spaces.')
-        env = AsyncVectorEnv(env_fns, shared_memory=False)
+        env = AsyncVectorEnv(env_fns)
 
         # test env
         # env.reset(seed=env_seeds)

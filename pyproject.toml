@@ -1,6 +1,6 @@
 [project]
 name = "diffusion_policy_brawn"
-description = "Diffusion Policy for running in the Brawn ecosystem."
+description = "Diffusion Policy for integration with Brawn."
 requires-python = ">=3.12"
 dynamic = ["version"]
 version = "0.0.1"

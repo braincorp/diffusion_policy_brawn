@@ -1,4 +1,4 @@
-# TODO: remove once integrated into Brawn
+"""Tests for Brawn policies."""
 import os
 
 import dill
@@ -9,7 +9,8 @@ from diffusion_policy.common.pytorch_util import dict_apply
 from diffusion_policy.policy.base_image_policy import BaseImagePolicy
 from diffusion_policy.workspace.train_diffusion_unet_image_workspace import TrainDiffusionUnetImageWorkspace
 
-CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
+
+DEFAULT_CHECKPOINT_PATH = os.path.expanduser("~/brawn_artifacts/checkpoints/checkpoints/diffusion_policy_pick_sugar_2024_10_19.ckpt")
 
 
 def load_workspace(checkpoint_path: str) -> TrainDiffusionUnetImageWorkspace:
@@ -33,11 +34,11 @@ def get_policy_from_workspace(workspace: TrainDiffusionUnetImageWorkspace) -> Ba
     return policy
 
 
-def main():
-    checkpoint_path = os.path.join(
-        CURRENT_DIRECTORY,
-        "data/20.25.53_train_diffusion_unet_image_pick_sugar_image/checkpoints/latest.ckpt"
-    )
+def test_pick_sugar_runs(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
+    """[smoke]Test that the pick sugar policy runs."""
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(f"Checkpoint {checkpoint_path} not found.")
+
     workspace: TrainDiffusionUnetImageWorkspace = load_workspace(checkpoint_path)
     policy: BaseImagePolicy = get_policy_from_workspace(workspace)
 
@@ -58,4 +59,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    test_pick_sugar_runs()

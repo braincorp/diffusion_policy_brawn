@@ -74,10 +74,6 @@ def test_pick_sugar_on_dataset(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
     dataset = hydra.utils.instantiate(workspace.cfg.task.dataset)
     dataloader = DataLoader(dataset, **workspace.cfg.dataloader)  # training set
 
-    normalizer = dataset.get_normalizer()
-    policy.set_normalizer(normalizer)  # needed?
-    policy.eval().to(DEVICE)
-
     batch = next(iter(dataloader))
     batch = dict_apply(batch, lambda x: x.to(DEVICE, non_blocking=True))
     with torch.no_grad():

@@ -79,7 +79,6 @@ def test_pick_sugar_on_dataset(
 
     batch = next(iter(dataloader))
     batch = dict_apply(batch, lambda x: x.to(DEVICE, non_blocking=True))
-
     with torch.no_grad():
         loss = policy.compute_loss(batch).cpu().numpy()
 

@@ -63,7 +63,10 @@ def test_pick_sugar_runs(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
     print(action)
 
 
-def test_pick_sugar_on_dataset(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
+def test_pick_sugar_on_dataset(
+        checkpoint_path: str = DEFAULT_CHECKPOINT_PATH,
+        debug: bool = False
+):
     """Test that the pick sugar policy performs as expected on a training batch."""
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"Checkpoint {checkpoint_path} not found.")
@@ -80,9 +83,55 @@ def test_pick_sugar_on_dataset(checkpoint_path: str = DEFAULT_CHECKPOINT_PATH):
         loss = policy.compute_loss(batch).cpu().numpy()
 
     print(f'Loss: {loss}')
+    if debug:
+        import matplotlib.pyplot as plt
+
+        with torch.no_grad():
+            output = policy.predict_action(batch['obs'])
+        del dataloader  # prevents hanging if exit early while debugging
+
+        episode_index = 1
+        image_sequence = (batch['obs']['image'][episode_index].detach().to('cpu').numpy() * 255).astype(np.uint8)
+        image_sequence = np.transpose(image_sequence, (0, 2, 3, 1))
+
+        state_sequence = batch['obs']['state'][episode_index].detach().to('cpu').numpy()
+        print(f"State sequence:\n{state_sequence}")
+
+        plt.figure()
+        num_subplots = len(image_sequence)
+        h = int(np.ceil(np.sqrt(num_subplots)))
+        w = int(np.ceil(num_subplots / h))
+        for i, image in enumerate(image_sequence):
+            plt.subplot(h, w, i + 1)
+            plt.imshow(image)
+            plt.title(f'Image {i}')
+
+        plt.subplots_adjust(hspace=0.5, wspace=0.5)
+
+        action_gt = batch['action'][episode_index].detach().to('cpu').numpy()
+        action_pred = output['action_pred'][episode_index].detach().to('cpu').numpy()
+
+        # Compare the ground truth and predicted actions
+        plt.figure()
+        plt.suptitle('Components')
+        index_names = ['x', 'y', 'z', 'roll', 'pitch', 'yaw', 'gripper']
+        for index, name in enumerate(index_names):
+            plt.subplot(3, 3, index + 1)
+            plt.plot(action_gt[:, index], label='GT')
+            plt.plot(action_pred[:, index], label='Pred')
+            plt.title(name)
+            plt.legend()
+
+        fig = plt.figure('3D')
+        plt.title('3D Positions')
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(action_gt[:, 0], action_gt[:, 1], action_gt[:, 2], label='GT')
+        ax.plot(action_pred[:, 0], action_pred[:, 1], action_pred[:, 2], label='Pred')
+        plt.show()
+
     assert loss < 0.01
 
 
 if __name__ == '__main__':
     test_pick_sugar_runs()
-    test_pick_sugar_on_dataset()
+    test_pick_sugar_on_dataset(debug=True)

@@ -79,6 +79,24 @@ def test_pick_sugar_on_dataset(
 
     batch = next(iter(dataloader))
     batch = dict_apply(batch, lambda x: x.to(DEVICE, non_blocking=True))
+    del dataloader  # prevents hanging if exit early while debugging
+    if debug:
+        import matplotlib.pyplot as plt
+
+        image_sequence = (batch['obs']['image'][0].detach().to('cpu').numpy() * 255).astype(np.uint8)
+        image_sequence = np.transpose(image_sequence, (0, 2, 3, 1))
+        plt.figure()
+        num_subplots = len(image_sequence)
+        h = int(np.ceil(np.sqrt(num_subplots)))
+        w = int(np.ceil(num_subplots / h))
+        for i, image in enumerate(image_sequence):
+            plt.subplot(h, w, i + 1)
+            plt.imshow(image)
+            plt.title(f'Image {i}')
+
+        plt.subplots_adjust(hspace=0.5, wspace=0.5)
+        plt.show()
+
     with torch.no_grad():
         loss = policy.compute_loss(batch).cpu().numpy()
         output = policy.predict_action(batch['obs'])
@@ -92,7 +110,7 @@ def test_pick_sugar_on_dataset(
 
         # Compare the ground truth and predicted actions
         plt.figure()
-        plt.title('Components')
+        plt.suptitle('Components')
         index_names = ['x', 'y', 'z', 'roll', 'pitch', 'yaw', 'gripper']
         for index, name in enumerate(index_names):
             plt.subplot(3, 3, index + 1)

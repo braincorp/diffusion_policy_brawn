@@ -10,14 +10,15 @@ shape_meta: &shape_meta
       shape: ${task.image_shape}
       type: rgb
     state:
-      shape: [7]
+      shape: [10]
       type: low_dim
   action:
-    shape: [7]
+    shape: [10]
 
 env_runner:
   _target_: diffusion_policy.env_runner.brawn_image_runner.BrawnImageRunner
 
+# TODO: update dataset!
 dataset:
   _target_: diffusion_policy.dataset.brawn_pick_sugar_image_dataset.BrawnPickSugarImageDataset
   zarr_path: ${task.dataset_path}

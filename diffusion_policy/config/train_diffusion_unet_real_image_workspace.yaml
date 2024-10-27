@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task: real_pusht_image
+  - task: pick_sugar_image
 
 name: train_diffusion_unet_image
 _target_: diffusion_policy.workspace.train_diffusion_unet_image_workspace.TrainDiffusionUnetImageWorkspace
@@ -43,8 +43,8 @@ policy:
       _target_: diffusion_policy.model.vision.model_getter.get_resnet
       name: resnet18
       weights: null
-    resize_shape: [240, 320]
-    crop_shape: [216, 288] # ch, cw 240x320 90%
+    resize_shape: [240, 240]
+    crop_shape: [228, 228] # ch, cw 240x240 90% by area
     random_crop: True
     use_group_norm: True
     share_rgb_model: False

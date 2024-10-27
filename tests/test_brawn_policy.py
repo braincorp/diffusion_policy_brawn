@@ -79,9 +79,16 @@ def test_pick_sugar_on_dataset(
 
     batch = next(iter(dataloader))
     batch = dict_apply(batch, lambda x: x.to(DEVICE, non_blocking=True))
-    del dataloader  # prevents hanging if exit early while debugging
+
+    with torch.no_grad():
+        loss = policy.compute_loss(batch).cpu().numpy()
+        output = policy.predict_action(batch['obs'])
+
+    print(f'Loss: {loss}')
     if debug:
         import matplotlib.pyplot as plt
+
+        del dataloader  # prevents hanging if exit early while debugging
 
         episode_index = 1
         image_sequence = (batch['obs']['image'][episode_index].detach().to('cpu').numpy() * 255).astype(np.uint8)
@@ -100,17 +107,7 @@ def test_pick_sugar_on_dataset(
             plt.title(f'Image {i}')
 
         plt.subplots_adjust(hspace=0.5, wspace=0.5)
-        plt.show()
 
-    with torch.no_grad():
-        loss = policy.compute_loss(batch).cpu().numpy()
-        output = policy.predict_action(batch['obs'])
-
-    print(f'Loss: {loss}')
-    if debug:
-        import matplotlib.pyplot as plt
-
-        episode_index = 0
         action_gt = batch['action'][episode_index].detach().to('cpu').numpy()
         action_pred = output['action_pred'][episode_index].detach().to('cpu').numpy()
 

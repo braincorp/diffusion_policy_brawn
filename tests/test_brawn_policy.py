@@ -98,7 +98,6 @@ def test_pick_sugar_on_dataset(
             plt.subplot(h, w, i + 1)
             plt.imshow(image)
             plt.title(f'Image {i}')
-            plt.show()
 
         plt.subplots_adjust(hspace=0.5, wspace=0.5)
         plt.show()

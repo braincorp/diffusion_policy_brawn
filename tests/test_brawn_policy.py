@@ -82,12 +82,13 @@ def test_pick_sugar_on_dataset(
 
     with torch.no_grad():
         loss = policy.compute_loss(batch).cpu().numpy()
-        output = policy.predict_action(batch['obs'])
 
     print(f'Loss: {loss}')
     if debug:
         import matplotlib.pyplot as plt
 
+        with torch.no_grad():
+            output = policy.predict_action(batch['obs'])
         del dataloader  # prevents hanging if exit early while debugging
 
         episode_index = 1

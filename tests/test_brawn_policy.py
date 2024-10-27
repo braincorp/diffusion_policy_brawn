@@ -83,8 +83,13 @@ def test_pick_sugar_on_dataset(
     if debug:
         import matplotlib.pyplot as plt
 
-        image_sequence = (batch['obs']['image'][0].detach().to('cpu').numpy() * 255).astype(np.uint8)
+        episode_index = 1
+        image_sequence = (batch['obs']['image'][episode_index].detach().to('cpu').numpy() * 255).astype(np.uint8)
         image_sequence = np.transpose(image_sequence, (0, 2, 3, 1))
+
+        state_sequence = batch['obs']['state'][episode_index].detach().to('cpu').numpy()
+        print(f"State sequence:\n{state_sequence}")
+
         plt.figure()
         num_subplots = len(image_sequence)
         h = int(np.ceil(np.sqrt(num_subplots)))
@@ -93,6 +98,7 @@ def test_pick_sugar_on_dataset(
             plt.subplot(h, w, i + 1)
             plt.imshow(image)
             plt.title(f'Image {i}')
+            plt.show()
 
         plt.subplots_adjust(hspace=0.5, wspace=0.5)
         plt.show()
@@ -105,8 +111,9 @@ def test_pick_sugar_on_dataset(
     if debug:
         import matplotlib.pyplot as plt
 
-        action_gt = batch['action'][0].detach().to('cpu').numpy()
-        action_pred = output['action_pred'][0].detach().to('cpu').numpy()
+        episode_index = 0
+        action_gt = batch['action'][episode_index].detach().to('cpu').numpy()
+        action_pred = output['action_pred'][episode_index].detach().to('cpu').numpy()
 
         # Compare the ground truth and predicted actions
         plt.figure()
